@@ -32,3 +32,8 @@ RUN pip3 install submodules/diff-gaussian-rasterization
 
 RUN cd submodules/dust3r/croco/models/curope/ &&\
     python3 setup.py build_ext --inplace
+    
+RUN pip3 install plyfile
+RUN apt-get install -y libgl1-mesa-dev libglib2.0-0
+
+ENV CUDA_VISIBLE_DEVICES=0
