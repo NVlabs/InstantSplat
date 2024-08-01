@@ -51,11 +51,11 @@ conda create -n instantsplat python=3.11 cmake=3.14.0
 conda activate instantsplat
 conda install pytorch torchvision pytorch-cuda=12.1 -c pytorch -c nvidia  # use the correct version of cuda for your system
 pip install -r requirements.txt
-pip install submodules/diff-gaussian-rasterization
 pip install submodules/simple-knn
 # modify the rasterizer
 vim submodules/diff-gaussian-rasterization/cuda_rasterizer/auxiliary.h
 'p_view.z <= 0.2f' -> 'p_view.z <= 0.001f' # line 154
+pip install submodules/diff-gaussian-rasterization
 ```
 
 3. Optional but highly suggested, compile the cuda kernels for RoPE (as in CroCo v2).
