@@ -1,0 +1,12 @@
+*.pyc
+.vscode
+output
+build
+diff_rasterization/diff_rast.egg-info
+diff_rasterization/dist
+tensorboard_3d
+screenshots
+dust3r/*
+data/TT/Family/3_views/sparse/
+data/TT/Family/24_views/sparse/
+data/sora/santorini/3_views/sparse/
