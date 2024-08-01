@@ -65,7 +65,7 @@ cd submodules/dust3r/croco/models/curope/
 python setup.py build_ext --inplace
 ```
 
-Alternative: use the pre-built docker image: pytorch2.1.2-cuda11.8-cudnn8-devel
+Alternative: use the pre-built docker image: pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel
 ```
 docker pull dockerzhiwen/instantsplat_public
 ```
