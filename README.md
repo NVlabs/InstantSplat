@@ -7,7 +7,7 @@
 </h5>
 
 <div align="center">
-This repository is the official implementation of InstantSplat, an sparse-view, SfM-free framework for large-scale construction using Gaussian Splatting.
+This repository is the official implementation of InstantSplat, an sparse-view, SfM-free framework for large-scale scene reconstruction method using Gaussian Splatting.
 InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 </div>
 <br>
@@ -45,7 +45,7 @@ wget https://download.europe.naverlabs.com/ComputerVision/DUSt3R/DUSt3R_ViTLarge
 cd ../../
 ```
 
-2. Create the environment, here we show an example using conda.
+2. Create the environment (or use pre-built docker), here we show an example using conda.
 ```bash
 conda create -n instantsplat python=3.11 cmake=3.14.0
 conda activate instantsplat
@@ -65,21 +65,25 @@ cd submodules/dust3r/croco/models/curope/
 python setup.py build_ext --inplace
 ```
 
+Alternative: use the pre-built docker image: pytorch2.1.2-cuda11.8-cudnn8-devel
+```
+docker pull dockerzhiwen/instantsplat_public
+```
+
 ### Usage
-1. Data preparation
+1. Data preparation (Our pre-processed data: [link](https://drive.google.com/file/d/1Z17tIgufz7-eZ-W0md_jUlxq89CD1e5s/view))
 ```bash
   cd <data_path>
   # then do whatever data preparation
 ```
 
-
 2. Command
 ```bash
-  # InstantSplat train and evaluate (with GT reference) using the following command.
-  bash scripts/run_train_eval.sh
-
   # InstantSplat train and output video (no GT reference, render by interpolation) using the following command.
   bash scripts/run_train_infer.sh
+
+  # InstantSplat train and evaluate (with GT reference) using the following command.
+  bash scripts/run_train_eval.sh
 ```
 
 ## Acknowledgement
