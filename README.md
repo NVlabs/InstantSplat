@@ -68,8 +68,9 @@ python setup.py build_ext --inplace
 
 Alternative: use the pre-built docker image: pytorch2.1.2-cuda11.8-cudnn8-devel
 ```
-docker pull dockerzhiwen/instantsplat_public
+docker pull dockerzhiwen/instantsplat_public:2.0
 ```
+if docker failed to produce reasonable results, try Installation step again within the docker.
 
 ### Usage
 1. Data preparation (Our pre-processed data: [link](https://drive.google.com/file/d/1Z17tIgufz7-eZ-W0md_jUlxq89CD1e5s/view))
