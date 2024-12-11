@@ -4,5 +4,8 @@
 
 data
 output*
-submodules
 mast3r/checkpoints
+
+build
+diff_rasterization/diff_rast.egg-info
+diff_rasterization/dist
