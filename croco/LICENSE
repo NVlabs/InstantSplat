@@ -1,0 +1,52 @@
+CroCo, Copyright (c) 2022-present Naver Corporation, is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 license.
+
+A summary of the CC BY-NC-SA 4.0 license is located here:
+	https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+The CC BY-NC-SA 4.0 license is located here:
+	https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+	
+	
+SEE NOTICE BELOW WITH RESPECT TO THE FILE: models/pos_embed.py, models/blocks.py
+
+***************************
+
+NOTICE WITH RESPECT TO THE FILE: models/pos_embed.py
+
+This software is being redistributed in a modifiled form. The original form is available here:
+
+https://github.com/facebookresearch/mae/blob/main/util/pos_embed.py
+
+This software in this file incorporates parts of the following software available here:
+
+Transformer: https://github.com/tensorflow/models/blob/master/official/legacy/transformer/model_utils.py
+available under the following license: https://github.com/tensorflow/models/blob/master/LICENSE
+
+MoCo v3: https://github.com/facebookresearch/moco-v3
+available under the following license: https://github.com/facebookresearch/moco-v3/blob/main/LICENSE
+
+DeiT: https://github.com/facebookresearch/deit
+available under the following license: https://github.com/facebookresearch/deit/blob/main/LICENSE
+
+
+ORIGINAL COPYRIGHT NOTICE AND PERMISSION NOTICE AVAILABLE HERE IS REPRODUCE BELOW:
+
+https://github.com/facebookresearch/mae/blob/main/LICENSE
+
+Attribution-NonCommercial 4.0 International
+
+***************************
+
+NOTICE WITH RESPECT TO THE FILE: models/blocks.py
+
+This software is being redistributed in a modifiled form. The original form is available here:
+
+https://github.com/rwightman/pytorch-image-models
+
+ORIGINAL COPYRIGHT NOTICE AND PERMISSION NOTICE AVAILABLE HERE IS REPRODUCE BELOW:
+
+https://github.com/rwightman/pytorch-image-models/blob/master/LICENSE
+
+Apache License
+Version 2.0, January 2004
+http://www.apache.org/licenses/

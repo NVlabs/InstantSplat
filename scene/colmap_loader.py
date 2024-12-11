@@ -65,6 +65,7 @@ def rotmat2qvec(R):
         qvec *= -1
     return qvec
 
+
 class Image(BaseImage):
     def qvec2rotmat(self):
         return qvec2rotmat(self.qvec)
@@ -79,6 +80,7 @@ def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
     """
     data = fid.read(num_bytes)
     return struct.unpack(endian_character + format_char_sequence, data)
+
 
 def read_points3D_text(path):
     """
@@ -98,7 +100,6 @@ def read_points3D_text(path):
             line = line.strip()
             if len(line) > 0 and line[0] != "#":
                 num_points += 1
-
 
     xyzs = np.empty((num_points, 3))
     rgbs = np.empty((num_points, 3))
@@ -121,6 +122,7 @@ def read_points3D_text(path):
                 count += 1
 
     return xyzs, rgbs, errors
+
 
 def read_points3D_binary(path_to_model_file):
     """
@@ -153,6 +155,7 @@ def read_points3D_binary(path_to_model_file):
             errors[p_id] = error
     return xyzs, rgbs, errors
 
+
 def read_intrinsics_text(path):
     """
     Taken from https://github.com/colmap/colmap/blob/dev/scripts/python/read_write_model.py
@@ -176,6 +179,7 @@ def read_intrinsics_text(path):
                                             width=width, height=height,
                                             params=params)
     return cameras
+
 
 def read_extrinsics_binary(path_to_model_file):
     """
@@ -292,3 +296,166 @@ def read_colmap_bin_array(path):
         array = np.fromfile(fid, np.float32)
     array = array.reshape((width, height, channels), order="F")
     return np.transpose(array, (1, 0, 2)).squeeze()
+
+
+def write_cameras_text(cameras, path):
+    """
+    see: src/colmap/scene/reconstruction.cc
+        void Reconstruction::WriteCamerasText(const std::string& path)
+        void Reconstruction::ReadCamerasText(const std::string& path)
+    """
+    HEADER = (
+        "# Camera list with one line of data per camera:\n"
+        + "#   CAMERA_ID, MODEL, WIDTH, HEIGHT, PARAMS[]\n"
+        + "# Number of cameras: {}\n".format(len(cameras))
+    )
+    with open(path, "w") as fid:
+        fid.write(HEADER)
+        for _, cam in cameras.items():
+            to_write = [cam.id, cam.model, cam.width, cam.height, *cam.params]
+            line = " ".join([str(elem) for elem in to_write])
+            fid.write(line + "\n")
+
+
+def write_next_bytes(fid, data, format_char_sequence, endian_character="<"):
+    """pack and write to a binary file.
+    :param fid:
+    :param data: data to send, if multiple elements are sent at the same time,
+    they should be encapsuled either in a list or a tuple
+    :param format_char_sequence: List of {c, e, f, d, h, H, i, I, l, L, q, Q}.
+    should be the same length as the data list or tuple
+    :param endian_character: Any of {@, =, <, >, !}
+    """
+    if isinstance(data, (list, tuple)):
+        bytes = struct.pack(endian_character + format_char_sequence, *data)
+    else:
+        bytes = struct.pack(endian_character + format_char_sequence, data)
+    fid.write(bytes)
+
+
+def write_cameras_binary(cameras, path_to_model_file):
+    """
+    see: src/colmap/scene/reconstruction.cc
+        void Reconstruction::WriteCamerasBinary(const std::string& path)
+        void Reconstruction::ReadCamerasBinary(const std::string& path)
+    """
+    with open(path_to_model_file, "wb") as fid:
+        write_next_bytes(fid, len(cameras), "Q")
+        for _, cam in cameras.items():
+            model_id = CAMERA_MODEL_NAMES[cam.model].model_id
+            camera_properties = [cam.id, model_id, cam.width, cam.height]
+            write_next_bytes(fid, camera_properties, "iiQQ")
+            for p in cam.params:
+                write_next_bytes(fid, float(p), "d")
+    return cameras
+
+
+def write_images_text(images, path):
+    """
+    see: src/colmap/scene/reconstruction.cc
+        void Reconstruction::ReadImagesText(const std::string& path)
+        void Reconstruction::WriteImagesText(const std::string& path)
+    """
+    if len(images) == 0:
+        mean_observations = 0
+    else:
+        mean_observations = sum(
+            (len(img.point3D_ids) for _, img in images.items())
+        ) / len(images)
+    HEADER = (
+        "# Image list with two lines of data per image:\n"
+        + "#   IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME\n"
+        + "#   POINTS2D[] as (X, Y, POINT3D_ID)\n"
+        + "# Number of images: {}, mean observations per image: {}\n".format(
+            len(images), mean_observations
+        )
+    )
+
+    with open(path, "w") as fid:
+        fid.write(HEADER)
+        for _, img in images.items():
+            image_header = [
+                img.id,
+                *img.qvec,
+                *img.tvec,
+                img.camera_id,
+                img.name,
+            ]
+            first_line = " ".join(map(str, image_header))
+            fid.write(first_line + "\n")
+
+            points_strings = []
+            for xy, point3D_id in zip(img.xys, img.point3D_ids):
+                points_strings.append(" ".join(map(str, [*xy, point3D_id])))
+            fid.write(" ".join(points_strings) + "\n")
+
+
+def write_images_binary(images, path_to_model_file):
+    """
+    see: src/colmap/scene/reconstruction.cc
+        void Reconstruction::ReadImagesBinary(const std::string& path)
+        void Reconstruction::WriteImagesBinary(const std::string& path)
+    """
+    with open(path_to_model_file, "wb") as fid:
+        write_next_bytes(fid, len(images), "Q")
+        for _, img in images.items():
+            write_next_bytes(fid, img.id, "i")
+            write_next_bytes(fid, img.qvec.tolist(), "dddd")
+            write_next_bytes(fid, img.tvec.tolist(), "ddd")
+            write_next_bytes(fid, img.camera_id, "i")
+            for char in img.name:
+                write_next_bytes(fid, char.encode("utf-8"), "c")
+            write_next_bytes(fid, b"\x00", "c")
+            write_next_bytes(fid, len(img.point3D_ids), "Q")
+            for xy, p3d_id in zip(img.xys, img.point3D_ids):
+                write_next_bytes(fid, [*xy, p3d_id], "ddq")
+
+
+def write_points3D_text(points3D, path):
+    """
+    see: src/colmap/scene/reconstruction.cc
+        void Reconstruction::ReadPoints3DText(const std::string& path)
+        void Reconstruction::WritePoints3DText(const std::string& path)
+    """
+    if len(points3D) == 0:
+        mean_track_length = 0
+    else:
+        mean_track_length = sum(
+            (len(pt.image_ids) for _, pt in points3D.items())
+        ) / len(points3D)
+    HEADER = (
+        "# 3D point list with one line of data per point:\n"
+        + "#   POINT3D_ID, X, Y, Z, R, G, B, ERROR, TRACK[] as (IMAGE_ID, POINT2D_IDX)\n"
+        + "# Number of points: {}, mean track length: {}\n".format(
+            len(points3D), mean_track_length
+        )
+    )
+
+    with open(path, "w") as fid:
+        fid.write(HEADER)
+        for _, pt in points3D.items():
+            point_header = [pt.id, *pt.xyz, *pt.rgb, pt.error]
+            fid.write(" ".join(map(str, point_header)) + " ")
+            track_strings = []
+            for image_id, point2D in zip(pt.image_ids, pt.point2D_idxs):
+                track_strings.append(" ".join(map(str, [image_id, point2D])))
+            fid.write(" ".join(track_strings) + "\n")
+
+
+def write_points3D_binary(points3D, path_to_model_file):
+    """
+    see: src/colmap/scene/reconstruction.cc
+        void Reconstruction::ReadPoints3DBinary(const std::string& path)
+        void Reconstruction::WritePoints3DBinary(const std::string& path)
+    """
+    with open(path_to_model_file, "wb") as fid:
+        write_next_bytes(fid, len(points3D), "Q")
+        for _, pt in points3D.items():
+            write_next_bytes(fid, pt.id, "Q")
+            write_next_bytes(fid, pt.xyz.tolist(), "ddd")
+            write_next_bytes(fid, pt.rgb.tolist(), "BBB")
+            write_next_bytes(fid, pt.error, "d")
+            track_length = pt.image_ids.shape[0]
+            write_next_bytes(fid, track_length, "Q")
+            for image_id, point2D_id in zip(pt.image_ids, pt.point2D_idxs):
+                write_next_bytes(fid, [image_id, point2D_id], "ii")

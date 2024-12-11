@@ -1,9 +1,12 @@
+[submodule "croco"]
+	path = croco
+	url = https://github.com/naver/croco
 [submodule "submodules/simple-knn"]
 	path = submodules/simple-knn
 	url = https://gitlab.inria.fr/bkerbl/simple-knn.git
 [submodule "submodules/diff-gaussian-rasterization"]
 	path = submodules/diff-gaussian-rasterization
-	url = https://github.com/graphdeco-inria/diff-gaussian-rasterization
-[submodule "submodules/dust3r"]
-	path = submodules/dust3r
-	url = https://github.com/naver/dust3r
+	url = https://github.com/graphdeco-inria/diff-gaussian-rasterization.git
+[submodule "submodules/fused-ssim"]
+	path = submodules/fused-ssim
+	url = https://github.com/rahul-goel/fused-ssim.git

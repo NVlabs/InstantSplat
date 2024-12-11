@@ -14,6 +14,28 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from math import exp
 
+def l1_loss_mask(network_output, gt, mask):
+    # Calculate the absolute difference
+    diff = torch.abs(network_output - gt)
+    # Apply the mask
+    masked_diff = diff * mask
+    # Calculate the mean over the non-zero mask elements
+    return masked_diff.sum() / mask.sum()
+
+def ssim_loss_mask(img1, img2, mask, window_size=11, size_average=True):
+    channel = img1.size(-3)
+    window = create_window(window_size, channel)
+
+    if img1.is_cuda:
+        window = window.cuda(img1.get_device())
+    window = window.type_as(img1)
+
+    # Apply the mask to both images
+    img1_masked = img1 * mask
+    img2_masked = img2 * mask
+
+    return _ssim(img1_masked, img2_masked, window, window_size, channel, size_average)
+
 def l1_loss(network_output, gt):
     return torch.abs((network_output - gt)).mean()
 
