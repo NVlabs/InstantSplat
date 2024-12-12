@@ -29,7 +29,7 @@ InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 https://github.com/zhiwenfan/zhiwenfan.github.io/assets/34684115/748ae0de-8186-477a-bab3-3bed80362ad7
 
 ## TODO List
-- [x] Support 2D-GS
+- [ ] Support 2D-GS
 - [ ] Support Mip-Splatting
 
 ## Get Started
