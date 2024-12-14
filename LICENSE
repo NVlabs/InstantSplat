@@ -119,6 +119,12 @@
           or as an addendum to the NOTICE text from the Work, provided
           that such additional attribution notices cannot be construed
           as modifying the License.
+      (e) This project relies on third-party software, including DUSt3R, 
+          which is licensed under the Creative Commons 
+          Attribution-NonCommercial-ShareAlike 4.0 license (CC BY-NC-SA 4.0). 
+          The use of DUSt3R is restricted to its original license terms. 
+          It is the user's responsibility to ensure compliance with the 
+          CC BY-NC-SA 4.0 license for any operations involving DUSt3R.
 
       You may add Your own copyright statement to Your modifications and
       may provide additional or different license terms and conditions
@@ -173,9 +179,19 @@
       incurred by, or claims asserted against, such Contributor by reason
       of your accepting any such warranty or additional liability.
 
-   10. This project will download and install additional third-party 
-       open source software projects. Review the license terms of these 
-       open source projects before use.
+   10. This project includes dependencies on third-party software projects, 
+      such as DUSt3R. DUSt3R is licensed under the Creative Commons 
+      Attribution-NonCommercial-ShareAlike 4.0 license (CC BY-NC-SA 4.0). 
+      This license imposes restrictions, including a prohibition on commercial use. 
+      The license terms of DUSt3R can be reviewed at:
+      - https://creativecommons.org/licenses/by-nc-sa/4.0/
+      - https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+    
+      DUSt3R is used in this project for initialization purposes only. 
+      The optimization and other core functionalities of this project are 
+      independent of DUSt3R and are licensed under the Apache License 2.0. 
+      Users must ensure compliance with the terms of all licenses when using this project.
+
 
    END OF TERMS AND CONDITIONS
 
