@@ -11,6 +11,7 @@
 
 import os
 import sys
+import torch
 from PIL import Image
 from typing import NamedTuple
 from scene.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec2rotmat, \
@@ -18,6 +19,7 @@ from scene.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec
 from utils.graphics_utils import getWorld2View2, focal2fov, fov2focal
 import numpy as np
 import json
+import copy
 from pathlib import Path
 from plyfile import PlyData, PlyElement
 from utils.sh_utils import SH2RGB
@@ -68,8 +70,40 @@ def getNerfppNorm(cam_info):
 
     return {"translate": translate, "radius": radius}
 
-def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, eval):
 
+def loadCameras(poses, viewpoint_stack):
+
+    # load optimized poses
+    if poses.shape[0] == len(viewpoint_stack):
+        for idx, cam in enumerate(viewpoint_stack):
+            R = np.transpose(poses[idx][:3, :3])
+            T = poses[idx][:3, 3]
+            cam.R = R
+            cam.T = T
+            cam.world_view_transform = torch.tensor(getWorld2View2(R, T)).transpose(0, 1).cuda()
+            cam.full_proj_transform = (cam.world_view_transform.unsqueeze(0).bmm(cam.projection_matrix.unsqueeze(0))).squeeze(0)
+            cam.camera_center = cam.world_view_transform.inverse()[3, :3]
+
+    # load interpolated poses
+    elif poses.shape[0] > len(viewpoint_stack):
+        repeat_times = int(np.ceil(poses.shape[0] / len(viewpoint_stack)))
+        # Create repeated list instead of using np.tile
+        viewpoint_stack = [copy.deepcopy(vp) for vp in viewpoint_stack * repeat_times][:poses.shape[0]]
+        for idx in range(poses.shape[0]):                                 
+            R = np.transpose(poses[idx][:3, :3])
+            T = poses[idx][:3, 3]
+            viewpoint_stack[idx].uid = idx           
+            viewpoint_stack[idx].colmap_id = idx+1    
+            viewpoint_stack[idx].image_name = str(idx).zfill(5)    
+            viewpoint_stack[idx].R = R
+            viewpoint_stack[idx].T = T            
+            viewpoint_stack[idx].world_view_transform = torch.tensor(getWorld2View2(R, T)).transpose(0, 1).cuda()
+            viewpoint_stack[idx].full_proj_transform = (viewpoint_stack[idx].world_view_transform.unsqueeze(0).bmm(viewpoint_stack[idx].projection_matrix.unsqueeze(0))).squeeze(0)
+            viewpoint_stack[idx].camera_center = viewpoint_stack[idx].world_view_transform.inverse()[3, :3]
+    return viewpoint_stack
+
+
+def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
     cam_infos = []
     poses=[]
     for idx, key in enumerate(cam_extrinsics):
@@ -78,22 +112,21 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, eval):
         sys.stdout.write("Reading camera {}/{}".format(idx+1, len(cam_extrinsics)))
         sys.stdout.flush()
 
-        if eval:
-            extr = cam_extrinsics[key]
-            intr = cam_intrinsics[1]
-            uid = idx+1
-
-        else:
-            extr = cam_extrinsics[key]
-            intr = cam_intrinsics[extr.camera_id]
-            uid = intr.id
-
+        extr = cam_extrinsics[key]
+        intr = cam_intrinsics[extr.camera_id]
         height = intr.height
-        width = intr.width            
+        width = intr.width
+
+        uid = intr.id
         R = np.transpose(qvec2rotmat(extr.qvec))
         T = np.array(extr.tvec)
-        pose =  np.vstack((np.hstack((R, T.reshape(3,-1))),np.array([[0, 0, 0, 1]])))
+        pose = np.block([[R, T.reshape(3, 1)], [np.zeros((1, 3)), 1]])
         poses.append(pose)
+
+        image_path = os.path.join(images_folder, os.path.basename(extr.name))
+        image_name = os.path.basename(image_path).split(".")[0]
+        image = Image.open(image_path)
+
         if intr.model=="SIMPLE_PINHOLE":
             focal_length_x = intr.params[0]
             FovY = focal2fov(focal_length_x, height)
@@ -103,26 +136,28 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, eval):
             focal_length_y = intr.params[1]
             FovY = focal2fov(focal_length_y, height)
             FovX = focal2fov(focal_length_x, width)
+        elif intr.model=="SIMPLE_RADIAL":
+            f, cx, cy, r = intr.params
+            FovY = focal2fov(f, height)
+            FovX = focal2fov(f, width)
+            prcppoint = np.array([cx / width, cy / height])
+            # undistortion
+            image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+            K = np.array([[f, 0, cx], [0, f, cy], [0, 0, 1]])
+            D = np.array([r, 0, 0, 0])  # Only radial distortion
+            image_undistorted = cv2.undistort(image_cv, K, D, None)
+            image_undistorted = cv2.cvtColor(image_undistorted, cv2.COLOR_BGR2RGB)
+            image = Image.fromarray(image_undistorted)
         else:
             assert False, "Colmap camera model not handled: only undistorted datasets (PINHOLE or SIMPLE_PINHOLE cameras) supported!"
 
-
-        if eval:
-            tmp = os.path.dirname(os.path.dirname(os.path.join(images_folder)))
-            all_images_folder = os.path.join(tmp, 'images')
-            image_path = os.path.join(all_images_folder, os.path.basename(extr.name))
-        else:
-            image_path = os.path.join(images_folder, os.path.basename(extr.name))
-        image_name = os.path.basename(image_path).split(".")[0]
-        image = Image.open(image_path)
-
-
         cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                               image_path=image_path, image_name=image_name, width=width, height=height)
-    
         cam_infos.append(cam_info)
     sys.stdout.write('\n')
     return cam_infos, poses
+
+
 
 # For interpolated video, open when only render interpolated video
 def readColmapCamerasInterp(cam_extrinsics, cam_intrinsics, images_folder, model_path):
@@ -201,47 +236,106 @@ def storePly(path, xyz, rgb):
     ply_data = PlyData([vertex_element])
     ply_data.write(path)
 
-def readColmapSceneInfo(path, images, eval, args, opt, llffhold=2):
-    # try:
-    #     cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
-    #     cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
-    #     cam_extrinsics = read_extrinsics_binary(cameras_extrinsic_file)
-    #     cam_intrinsics = read_intrinsics_binary(cameras_intrinsic_file)
-    # except:
 
-    ##### For initializing test pose using PCD_Registration
-    if eval and opt.get_video==False:    
-        print("Loading initial test pose for evaluation.")
-        cameras_extrinsic_file = os.path.join(path, "init_test_pose/sparse/0", "images.txt")
+# def readColmapSceneInfo2(path, images, eval, args, opt, llffhold=8):
+#     try:
+#         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
+#         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
+#         cam_extrinsics = read_extrinsics_binary(cameras_extrinsic_file)
+#         cam_intrinsics = read_intrinsics_binary(cameras_intrinsic_file)
+#     except:
+#         cameras_extrinsic_file = os.path.join(path, f"sparse/0", "images.txt")
+#         cameras_intrinsic_file = os.path.join(path, f"sparse/0", "cameras.txt")
+#         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
+#         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
+
+#     reading_dir = "images" if images == None else images
+
+#     cam_infos_unsorted, poses = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir))
+#     sorting_indices = sorted(range(len(cam_infos_unsorted)), key=lambda x: cam_infos_unsorted[x].image_name)
+#     cam_infos = [cam_infos_unsorted[i] for i in sorting_indices]
+#     sorted_poses = [poses[i] for i in sorting_indices]
+#     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
+
+#     # Train-Test Split---CVPR
+#     start_index = int(llffhold/2)
+#     test_indices     = [idx for idx in range(start_index, len(cam_infos)) if idx % llffhold == 0]
+#     non_test_indices = [idx for idx in range(start_index, len(cam_infos)) if idx % llffhold != 0]
+#     if opt.n_views is None or opt.n_views == 0:
+#         opt.n_views = len(non_test_indices)
+#     sparse_indices = np.linspace(0, len(non_test_indices) - 1, opt.n_views, dtype=int)
+#     train_indices = [non_test_indices[i] for i in sparse_indices]
+#     print(">> Spliting Train-Test Set: ")
+#     print(" - sparse_idx:         ", sparse_indices)
+#     print(" - train_set_indices:  ", train_indices)
+#     print(" - test_set_indices:   ", test_indices)
+#     train_cam_infos = [cam_infos[i] for i in train_indices]
+#     test_cam_infos = [cam_infos[i] for i in test_indices]
+
+#     raise ValueError("An error occurred")
+
+#     # if eval:
+#     #     train_cam_infos = [c for idx, c in enumerate(cam_infos) if (idx+1) % llffhold != 0]
+#     #     test_cam_infos = [c for idx, c in enumerate(cam_infos) if (idx+1) % llffhold == 0]
+#     #     train_poses = [c for idx, c in enumerate(sorted_poses) if (idx+1) % llffhold != 0]
+#     #     test_poses = [c for idx, c in enumerate(sorted_poses) if (idx+1) % llffhold == 0]
+
+#     # else:
+#     #     train_cam_infos = cam_infos
+#     #     test_cam_infos = []
+#     #     train_poses = sorted_poses
+#     #     test_poses = []
+
+#     nerf_normalization = getNerfppNorm(train_cam_infos)
+
+#     ply_path = os.path.join(path, f"sparse_{opt.n_views}/0/points3D.ply")
+#     bin_path = os.path.join(path, f"sparse_{opt.n_views}/0/points3D.bin")
+#     txt_path = os.path.join(path, f"sparse_{opt.n_views}/0/points3D.txt")
+#     if not os.path.exists(ply_path):
+#         print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
+#         try:
+#             xyz, rgb, _ = read_points3D_binary(bin_path)
+#         except:
+#             xyz, rgb, _ = read_points3D_text(txt_path)
+#         storePly(ply_path, xyz, rgb)
+#     try:
+#         pcd = fetchPly(ply_path)
+#     except:
+#         pcd = None
+
+#     scene_info = SceneInfo(point_cloud=pcd,
+#                            train_cameras=train_cam_infos,
+#                            test_cameras=test_cam_infos,
+#                            nerf_normalization=nerf_normalization,
+#                            ply_path=ply_path,
+#                            train_poses=None,
+#                            test_poses=None)
+#     return scene_info
+
+def readColmapSceneInfo(path, images, eval, args, llffhold=8):
+
+    if eval:
+        cameras_extrinsic_file = os.path.join(path, f"sparse_{args.n_views}/1", "images.txt")
+        cameras_intrinsic_file = os.path.join(path, f"sparse_{args.n_views}/1", "cameras.txt")
     else:
-        cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.txt")
+        cameras_extrinsic_file = os.path.join(path, f"sparse_{args.n_views}/0", "images.txt")
+        cameras_intrinsic_file = os.path.join(path, f"sparse_{args.n_views}/0", "cameras.txt")
 
-    cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.txt")
     cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
     cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
-
     reading_dir = "images" if images == None else images
 
-    if opt.get_video:
-        cam_infos_unsorted, poses = readColmapCamerasInterp(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir), model_path=args.model_path)
-    else:
-        cam_infos_unsorted, poses = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir), eval=eval)
+    cam_infos_unsorted, poses = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir))
     sorting_indices = sorted(range(len(cam_infos_unsorted)), key=lambda x: cam_infos_unsorted[x].image_name)
     cam_infos = [cam_infos_unsorted[i] for i in sorting_indices]
     sorted_poses = [poses[i] for i in sorting_indices]
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
 
     if eval:
-        # train_cam_infos = [c for idx, c in enumerate(cam_infos) if (idx+1) % llffhold != 0]
-        # test_cam_infos = [c for idx, c in enumerate(cam_infos) if (idx+1) % llffhold == 0]
-        # train_poses = [c for idx, c in enumerate(sorted_poses) if (idx+1) % llffhold != 0]
-        # test_poses = [c for idx, c in enumerate(sorted_poses) if (idx+1) % llffhold == 0]
-
         train_cam_infos = cam_infos
         test_cam_infos = cam_infos
         train_poses = sorted_poses
         test_poses = sorted_poses
-
     else:
         train_cam_infos = cam_infos
         test_cam_infos = []
@@ -250,9 +344,9 @@ def readColmapSceneInfo(path, images, eval, args, opt, llffhold=2):
 
     nerf_normalization = getNerfppNorm(train_cam_infos)
 
-    ply_path = os.path.join(path, "sparse/0/points3D.ply")
-    bin_path = os.path.join(path, "sparse/0/points3D.bin")
-    txt_path = os.path.join(path, "sparse/0/points3D.txt")
+    ply_path = os.path.join(path, f"sparse_{args.n_views}/0/points3D.ply")
+    bin_path = os.path.join(path, f"sparse_{args.n_views}/0/points3D.bin")
+    txt_path = os.path.join(path, f"sparse_{args.n_views}/0/points3D.txt")
     if not os.path.exists(ply_path):
         print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
         try:
@@ -265,11 +359,6 @@ def readColmapSceneInfo(path, images, eval, args, opt, llffhold=2):
     except:
         pcd = None
 
-    # np.save("poses_family.npy", sorted_poses)
-    # breakpoint()
-    # np.save("3dpoints.npy", pcd.points)
-    # np.save("3dcolors.npy", pcd.colors)
-
     scene_info = SceneInfo(point_cloud=pcd,
                            train_cameras=train_cam_infos,
                            test_cameras=test_cam_infos,
@@ -278,6 +367,7 @@ def readColmapSceneInfo(path, images, eval, args, opt, llffhold=2):
                            train_poses=train_poses,
                            test_poses=test_poses)
     return scene_info
+
 
 def readCamerasFromTransforms(path, transformsfile, white_background, extension=".png"):
     cam_infos = []
