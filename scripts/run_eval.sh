@@ -110,7 +110,7 @@ run_on_gpu() {
     -m ${MODEL_PATH} \
     -r 1 \
     --n_views ${N_VIEW} \
-    --iterations ${gs_train_iter} \    
+    --iterations ${gs_train_iter} \
     --eval \
     > ${MODEL_PATH}/04_render_test.log 2>&1
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Rendering completed. Log saved in ${MODEL_PATH}/04_render_test.log"
