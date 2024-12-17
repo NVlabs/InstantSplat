@@ -27,10 +27,10 @@ RUN pip3 install -r requirements.txt
 ARG TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
 
 RUN pip3 install submodules/simple-knn
-RUN sed -i 's/p_view.z <= 0.2f/p_view.z <= 0.001f/g' /InstantSplat/submodules/diff-gaussian-rasterization/cuda_rasterizer/auxiliary.h
 RUN pip3 install submodules/diff-gaussian-rasterization
+RUN pip3 install submodules/fused-ssim
 
-RUN cd submodules/dust3r/croco/models/curope/ &&\
+RUN cd croco/models/curope/ &&\
     python3 setup.py build_ext --inplace
     
 RUN pip3 install plyfile

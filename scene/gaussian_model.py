@@ -10,7 +10,6 @@
 #
 
 import torch
-# from lietorch import SO3, SE3, Sim3, LieGroupParameter
 import numpy as np
 from utils.general_utils import inverse_sigmoid, get_expon_lr_func, build_rotation
 from torch import nn
@@ -24,39 +23,7 @@ from utils.general_utils import strip_symmetric, build_scaling_rotation
 from scipy.spatial.transform import Rotation as R
 from utils.pose_utils import rotation2quad, get_tensor_from_camera
 from utils.graphics_utils import getWorld2View2
-
-def quaternion_to_rotation_matrix(quaternion):
-    """
-    Convert a quaternion to a rotation matrix.
-
-    Parameters:
-    - quaternion: A tensor of shape (..., 4) representing quaternions.
-
-    Returns:
-    - A tensor of shape (..., 3, 3) representing rotation matrices.
-    """
-    # Ensure quaternion is of float type for computation
-    quaternion = quaternion.float()
-
-    # Normalize the quaternion to unit length
-    quaternion = quaternion / quaternion.norm(p=2, dim=-1, keepdim=True)
-
-    # Extract components
-    w, x, y, z = quaternion[..., 0], quaternion[..., 1], quaternion[..., 2], quaternion[..., 3]
-
-    # Compute rotation matrix components
-    xx, yy, zz = x * x, y * y, z * z
-    xy, xz, yz = x * y, x * z, y * z
-    xw, yw, zw = x * w, y * w, z * w
-
-    # Assemble the rotation matrix
-    R = torch.stack([
-        torch.stack([1 - 2 * (yy + zz),     2 * (xy - zw),     2 * (xz + yw)], dim=-1),
-        torch.stack([    2 * (xy + zw), 1 - 2 * (xx + zz),     2 * (yz - xw)], dim=-1),
-        torch.stack([    2 * (xz - yw),     2 * (yz + xw), 1 - 2 * (xx + yy)], dim=-1)
-    ], dim=-2)
-
-    return R
+from scene.per_point_adam import PerPointAdam
 
 
 class GaussianModel:
@@ -77,7 +44,6 @@ class GaussianModel:
         self.inverse_opacity_activation = inverse_sigmoid
 
         self.rotation_activation = torch.nn.functional.normalize
-
 
     def __init__(self, sh_degree : int):
         self.active_sh_degree = 0
@@ -144,40 +110,6 @@ class GaussianModel:
     def get_xyz(self):
         return self._xyz
 
-    def compute_relative_world_to_camera(self, R1, t1, R2, t2):
-        # Create a row of zeros with a one at the end, for homogeneous coordinates
-        zero_row = np.array([[0, 0, 0, 1]], dtype=np.float32)
-
-        # Compute the inverse of the first extrinsic matrix
-        E1_inv = np.hstack([R1.T, -R1.T @ t1.reshape(-1, 1)])  # Transpose and reshape for correct dimensions
-        E1_inv = np.vstack([E1_inv, zero_row])  # Append the zero_row to make it a 4x4 matrix
-
-        # Compute the second extrinsic matrix
-        E2 = np.hstack([R2, -R2 @ t2.reshape(-1, 1)])  # No need to transpose R2
-        E2 = np.vstack([E2, zero_row])  # Append the zero_row to make it a 4x4 matrix
-
-        # Compute the relative transformation
-        E_rel = E2 @ E1_inv
-
-        return E_rel
-
-    def init_RT_seq(self, cam_list):
-        poses =[]
-        for cam in cam_list[1.0]:
-            p = get_tensor_from_camera(cam.world_view_transform.transpose(0, 1)) # R T -> quat t
-            poses.append(p)
-        poses = torch.stack(poses)
-        self.P = poses.cuda().requires_grad_(True)
-
-
-    def get_RT(self, idx):
-        pose = self.P[idx]
-        return pose
-
-    def get_RT_test(self, idx):
-        pose = self.test_P[idx]
-        return pose
-
     @property
     def get_features(self):
         features_dc = self._features_dc
@@ -190,6 +122,22 @@ class GaussianModel:
 
     def get_covariance(self, scaling_modifier = 1):
         return self.covariance_activation(self.get_scaling, scaling_modifier, self._rotation)
+
+    def init_RT_seq(self, cam_list):
+        poses =[]
+        for cam in cam_list[1.0]:
+            p = get_tensor_from_camera(cam.world_view_transform.transpose(0, 1)) # R T -> quat t
+            poses.append(p)
+        poses = torch.stack(poses)
+        self.P = poses.cuda().requires_grad_(True)
+
+    def get_RT(self, idx):
+        pose = self.P[idx]
+        return pose
+    
+    def get_RT_test(self, idx):
+        pose = self.test_P[idx]
+        return pose
 
     def oneupSHdegree(self):
         if self.active_sh_degree < self.max_sh_degree:
@@ -227,16 +175,14 @@ class GaussianModel:
 
         l = [
             {'params': [self._xyz], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "xyz"},
-            {'params': [self._features_dc], 'lr': training_args.feature_lr, "name": "f_dc"},
-            {'params': [self._features_rest], 'lr': training_args.feature_lr / 20.0, "name": "f_rest"},
+            {'params': [self._features_dc], 'lr': training_args.feature_lr * 10, "name": "f_dc"},
+            {'params': [self._features_rest], 'lr': training_args.feature_lr / 20.0 * 10, "name": "f_rest"},
             {'params': [self._opacity], 'lr': training_args.opacity_lr, "name": "opacity"},
-            {'params': [self._scaling], 'lr': training_args.scaling_lr, "name": "scaling"},
-            {'params': [self._rotation], 'lr': training_args.rotation_lr, "name": "rotation"},
+            {'params': [self._scaling], 'lr': training_args.scaling_lr * 10, "name": "scaling"},
+            {'params': [self._rotation], 'lr': training_args.rotation_lr * 10, "name": "rotation"},
         ]
 
         l_cam = [{'params': [self.P],'lr': training_args.rotation_lr*0.1, "name": "pose"},]
-        # l_cam = [{'params': [self.P],'lr': training_args.rotation_lr, "name": "pose"},]
-
         l += l_cam
 
         self.optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
@@ -245,15 +191,43 @@ class GaussianModel:
                                                     lr_delay_mult=training_args.position_lr_delay_mult,
                                                     max_steps=training_args.position_lr_max_steps)
         self.cam_scheduler_args = get_expon_lr_func(
-                                                    # lr_init=0,
-                                                    # lr_final=0,
                                                     lr_init=training_args.rotation_lr*0.1,
                                                     lr_final=training_args.rotation_lr*0.001,
-                                                    # lr_init=training_args.position_lr_init*self.spatial_lr_scale*10,
-                                                    # lr_final=training_args.position_lr_final*self.spatial_lr_scale*10,
                                                     lr_delay_mult=training_args.position_lr_delay_mult,
-                                                    max_steps=1000)
+                                                    max_steps=training_args.iterations)
+        
+    # per-point optimizer
+    def training_setup_pp(self, training_args, confidence_lr=None):
+        self.percent_dense = training_args.percent_dense
+        self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
+        self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
+        self.per_point_lr = confidence_lr
 
+        l = [
+            {'params': [self._xyz], 'per_point_lr': self.per_point_lr, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "xyz"},
+            {'params': [self._features_dc], 'lr': training_args.feature_lr * 10, "name": "f_dc"},
+            {'params': [self._features_rest], 'lr': training_args.feature_lr / 20.0 * 10, "name": "f_rest"},
+            {'params': [self._opacity], 'lr': training_args.opacity_lr, "name": "opacity"},
+            {'params': [self._scaling], 'lr': training_args.scaling_lr * 10, "name": "scaling"},
+            {'params': [self._rotation], 'lr': training_args.rotation_lr * 10, "name": "rotation"}
+        ]
+
+        l_cam = [{'params': [self.P],'lr': training_args.rotation_lr*0.1, "name": "pose"},]
+        l += l_cam
+
+        self.optimizer = PerPointAdam(l, lr=0, betas=(0.9, 0.999), eps=1e-15, weight_decay=0.0)
+
+        self.xyz_scheduler_args = get_expon_lr_func(lr_init=training_args.position_lr_init*self.spatial_lr_scale,
+                                                    lr_final=training_args.position_lr_final*self.spatial_lr_scale,
+                                                    lr_delay_mult=training_args.position_lr_delay_mult,
+                                                    max_steps=training_args.position_lr_max_steps)
+
+        self.cam_scheduler_args = get_expon_lr_func(
+                                                    lr_init=training_args.rotation_lr*0.1,
+                                                    lr_final=training_args.rotation_lr*0.001,
+                                                    lr_delay_mult=training_args.position_lr_delay_mult,
+                                                    max_steps=training_args.iterations)
+    
     def update_learning_rate(self, iteration):
         ''' Learning rate scheduling per step '''
         for param_group in self.optimizer.param_groups:
@@ -265,6 +239,7 @@ class GaussianModel:
                 lr = self.xyz_scheduler_args(iteration)
                 param_group['lr'] = lr
         # return lr
+
 
     def construct_list_of_attributes(self):
         l = ['x', 'y', 'z', 'nx', 'ny', 'nz']

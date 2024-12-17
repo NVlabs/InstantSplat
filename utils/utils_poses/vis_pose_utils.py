@@ -220,47 +220,31 @@ def plot_pose(ref_poses, est_poses, output_path, args, vid=False):
             print(pose_vis_path)
             fig.savefig(pose_vis_path)
 
-    # else:
 
     fig = plt.figure()
-    fig.patch.set_facecolor('white')                    # 把背景设置为纯白色
+    fig.patch.set_facecolor('white')                   # Set background to pure white
     traj_by_label = {
         # "estimate (not aligned)": traj_est,
-    
         "Ours (aligned)": traj_est_aligned,
-        # "NoPe-NeRF (aligned)": traj_est_aligned,
-        # "CF-3DGS (aligned)": traj_est_aligned,
-        # "NeRFmm (aligned)": traj_est_aligned,
-        # args.method + " (aligned)": traj_est_aligned,
         "COLMAP (GT)": traj_ref
-        # "Ground-truth": traj_ref
     }
     plot_mode = plot.PlotMode.xyz
     # ax = plot.prepare_axis(fig, plot_mode, 111)
     ax = fig.add_subplot(111, projection="3d")
-    ax.set_facecolor('white')                           # 把子图设置为纯白色
+    ax.set_facecolor('white')                           # Set subplot to pure white
     ax.xaxis.set_tick_params(labelbottom=True)
     ax.yaxis.set_tick_params(labelleft=True)
     ax.zaxis.set_tick_params(labelleft=True)
-    colors = ['#2c9e38', '#d12920']     # 
-    # colors = ['#2c9e38', '#a72126']     # 
-
-    # colors = ['r', 'b']
-    styles = ['-', '--']
+    colors = ['#2c9e38', '#d12920']
+    styles = ['s-', 's-.']
 
     for idx, (label, traj) in enumerate(traj_by_label.items()):
         plot.traj(ax, plot_mode, traj,
                   styles[idx], colors[idx], label)
-        # break
     # plot.trajectories(fig, traj_by_label, plot.PlotMode.xyz)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=1)
     ax.view_init(elev=30., azim=45)
-    # ax.view_init(elev=10., azim=45)
     plt.tight_layout()
     pose_vis_path = output_path / f'pose_vis.png'
-    # pose_vis_path = os.path.join(os.path.dirname(output_path), f'pose_vis_{args.method}_{args.scene}.png')
-    fig.savefig(pose_vis_path)
+    fig.savefig(pose_vis_path , transparent=False)
 
-    # path_parts = args.pose_path.split('/')
-    # tmp_vis_path = '/'.join(path_parts[:-1]) + '/all_vis'
-    # tmp_vis_path2 = os.path.join(tmp_vis_path, f'pose_vis_{args.method}_{args.scene}.png')
-    # fig.savefig(tmp_vis_path2)
