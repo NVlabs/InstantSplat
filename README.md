@@ -30,6 +30,7 @@ https://github.com/zhiwenfan/zhiwenfan.github.io/assets/34684115/748ae0de-8186-4
 
 ## TODO List
 - [x] Support 2D-GS
+- [ ] Long sequence cross window alignment
 - [ ] Support Mip-Splatting
 
 ## Get Started
