@@ -16,7 +16,6 @@ InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 ## Table of Contents
 
 - [Table of Contents](#table-of-contents)
-- [Free-view Rendering](#free-view-rendering)
 - [Mesh Reconstruction](#mesh-reconstruction)
 - [TODO List](#todo-list)
 - [Get Started](#get-started)
@@ -24,10 +23,6 @@ InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
   - [Usage](#usage)
 - [Acknowledgement](#acknowledgement)
 - [Citation](#citation)
-
-
-## Free-view Rendering
-https://github.com/zhiwenfan/zhiwenfan.github.io/assets/34684115/748ae0de-8186-477a-bab3-3bed80362ad7
 
 
 ## Mesh Reconstruction
@@ -59,18 +54,13 @@ pip install submodules/diff-surfel-rasterization
 pip install submodules/fused-ssim
 ```
 
-1. Optional but highly suggested, compile the cuda kernels for RoPE (as in CroCo v2).
+3. Optional but highly suggested, compile the cuda kernels for RoPE (as in CroCo v2).
 ```bash
 # DUST3R relies on RoPE positional embeddings for which you can compile some cuda kernels for faster runtime.
 cd croco/models/curope/
 python setup.py build_ext --inplace
 ```
 
-Alternative: use the pre-built docker image: pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel
-```
-docker pull dockerzhiwen/instantsplat_public:2.0
-```
-if docker failed to produce reasonable results, try Installation step again within the docker.
 
 ### Usage
 1. Data preparation (download our pre-processed data from: [Hugging Face](https://huggingface.co/datasets/kairunwen/InstantSplat) or [Google Drive](https://drive.google.com/file/d/1K_xtwPKc7y8YAG78L0PH5ldR4PlfG-GR/view?usp=sharing))
