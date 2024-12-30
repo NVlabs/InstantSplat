@@ -247,7 +247,7 @@ def save_intrinsics(sparse_path, focals, org_imgs_shape, imgs_shape, save_focals
         np.save(sparse_path / 'non_scaled_focals.npy', focals)
 
 
-def save_points3D(sparse_path, imgs, pts3d, confs, masks=None, use_masks=True, save_all_pts=False, save_txt_path=None, depth_threshold=0.1, max_pts_num=150 * 10**10):
+def save_points3D(sparse_path, imgs, pts3d, confs, masks=None, use_masks=True, save_all_pts=False, save_txt_path=None, depth_threshold=0.01, max_pts_num=150 * 10**10):
     
     points3D_bin_file = sparse_path / 'points3D.bin'
     points3D_txt_file = sparse_path / 'points3D.txt'
@@ -459,6 +459,20 @@ def readImages(renders_dir, gt_dir):
         renders.append(tf.to_tensor(render).unsqueeze(0)[:, :3, :, :].cuda())
         gts.append(tf.to_tensor(gt).unsqueeze(0)[:, :3, :, :].cuda())
         image_names.append(fname)
+    
+    # Sort based on numerical values in filenames
+    def extract_number(filename):
+        match = re.search(r'\d+', filename)
+        return int(match.group()) if match else float('inf')
+    
+    # Create sorting indices based on image_names
+    indices = sorted(range(len(image_names)), key=lambda k: extract_number(image_names[k]))
+    
+    # Reorder all lists using the indices
+    renders = [renders[i] for i in indices]
+    gts = [gts[i] for i in indices]
+    image_names = [image_names[i] for i in indices]
+    
     return renders, gts, image_names
 
 def align_pose(pose1, pose2):

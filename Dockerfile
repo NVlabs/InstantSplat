@@ -13,12 +13,12 @@ ENV NVIDIA_DRIVER_CAPABILITIES \
 RUN apt-get update -y && apt-get install -y git wget
 
 WORKDIR /
-RUN git clone --recursive https://github.com/NVlabs/InstantSplat.git &&\
+RUN git clone --recursive -b instantsplat-2dgs https://github.com/NVlabs/InstantSplat.git &&\
     cd InstantSplat &&\
     git submodule update --init --recursive &&\
     cd submodules/dust3r/ &&\
-    mkdir -p checkpoints/ &&\
-    wget https://download.europe.naverlabs.com/ComputerVision/DUSt3R/DUSt3R_ViTLarge_BaseDecoder_512_dpt.pth -P checkpoints/
+    mkdir -p mast3r/checkpoints/ &&\
+    wget https://download.europe.naverlabs.com/ComputerVision/MASt3R/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth -P mast3r/checkpoints/
 
 WORKDIR /InstantSplat
 
@@ -27,7 +27,7 @@ RUN pip3 install -r requirements.txt
 ARG TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
 
 RUN pip3 install submodules/simple-knn
-RUN pip3 install submodules/diff-gaussian-rasterization
+RUN pip3 install submodules/diff-surfel-rasterization
 RUN pip3 install submodules/fused-ssim
 
 RUN cd croco/models/curope/ &&\

@@ -16,7 +16,7 @@ InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 ## Table of Contents
 
 - [Table of Contents](#table-of-contents)
-- [Free-view Rendering](#free-view-rendering)
+- [Mesh Reconstruction](#mesh-reconstruction)
 - [TODO List](#todo-list)
 - [Get Started](#get-started)
   - [Installation](#installation)
@@ -25,11 +25,11 @@ InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 - [Citation](#citation)
 
 
-## Free-view Rendering
-https://github.com/zhiwenfan/zhiwenfan.github.io/assets/34684115/748ae0de-8186-477a-bab3-3bed80362ad7
+## Mesh Reconstruction
+![visualization](assets/mesh_recon.png)
 
 ## TODO List
-- [ ] Support 2D-GS
+- [x] Support 2D-GS
 - [ ] Support Mip-Splatting
 
 ## Get Started
@@ -37,7 +37,7 @@ https://github.com/zhiwenfan/zhiwenfan.github.io/assets/34684115/748ae0de-8186-4
 ### Installation
 1. Clone InstantSplat and download pre-trained model.
 ```bash
-git clone --recursive https://github.com/NVlabs/InstantSplat.git
+git clone --recursive -b instantsplat-2dgs https://github.com/NVlabs/InstantSplat.git
 cd InstantSplat
 mkdir -p mast3r/checkpoints/
 wget https://download.europe.naverlabs.com/ComputerVision/MASt3R/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth -P mast3r/checkpoints/
@@ -50,11 +50,11 @@ conda activate instantsplat
 conda install pytorch torchvision pytorch-cuda=12.1 -c pytorch -c nvidia  # use the correct version of cuda for your system
 pip install -r requirements.txt
 pip install submodules/simple-knn
-pip install submodules/diff-gaussian-rasterization
+pip install submodules/diff-surfel-rasterization
 pip install submodules/fused-ssim
 ```
 
-1. Optional but highly suggested, compile the cuda kernels for RoPE (as in CroCo v2).
+3. Optional but highly suggested, compile the cuda kernels for RoPE (as in CroCo v2).
 ```bash
 # DUST3R relies on RoPE positional embeddings for which you can compile some cuda kernels for faster runtime.
 cd croco/models/curope/
@@ -65,10 +65,11 @@ Alternative: use the pre-built docker image: pytorch/pytorch:2.1.2-cuda11.8-cudn
 ```
 docker pull dockerzhiwen/instantsplat_public:2.0
 ```
-if docker failed to produce reasonable results, try Installation step again within the docker.
+After setting up a new container, make sure to install the right library (e.g., diff-surfel-rasterization) for 2D-GS.
+
 
 ### Usage
-1. Data preparation (Our pre-processed data: [link](https://drive.google.com/file/d/1Z17tIgufz7-eZ-W0md_jUlxq89CD1e5s/view))
+1. Data preparation (download our pre-processed data from: [Hugging Face](https://huggingface.co/datasets/kairunwen/InstantSplat) or [Google Drive](https://drive.google.com/file/d/1K_xtwPKc7y8YAG78L0PH5ldR4PlfG-GR/view?usp=sharing))
 ```bash
   cd <data_path>
   # then do whatever data preparation

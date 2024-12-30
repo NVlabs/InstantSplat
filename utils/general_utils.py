@@ -131,3 +131,47 @@ def safe_state(silent):
     np.random.seed(0)
     torch.manual_seed(0)
     torch.cuda.set_device(torch.device("cuda:0"))
+
+
+
+
+def create_rotation_matrix_from_direction_vector_batch(direction_vectors):
+    # Normalize the batch of direction vectors
+    direction_vectors = direction_vectors / torch.norm(direction_vectors, dim=-1, keepdim=True)
+    # Create a batch of arbitrary vectors that are not collinear with the direction vectors
+    v1 = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float32).to(direction_vectors.device).expand(direction_vectors.shape[0], -1).clone()
+    is_collinear = torch.all(torch.abs(direction_vectors - v1) < 1e-5, dim=-1)
+    v1[is_collinear] = torch.tensor([0.0, 1.0, 0.0], dtype=torch.float32).to(direction_vectors.device)
+
+    # Calculate the first orthogonal vectors
+    v1 = torch.cross(direction_vectors, v1)
+    v1 = v1 / (torch.norm(v1, dim=-1, keepdim=True))
+    # Calculate the second orthogonal vectors by taking the cross product
+    v2 = torch.cross(direction_vectors, v1)
+    v2 = v2 / (torch.norm(v2, dim=-1, keepdim=True))
+    # Create the batch of rotation matrices with the direction vectors as the last columns
+    rotation_matrices = torch.stack((v1, v2, direction_vectors), dim=-1)
+    return rotation_matrices
+
+# from kornia.geometry import conversions
+# def normal_to_rotation(normals):
+#     rotations = create_rotation_matrix_from_direction_vector_batch(normals)
+#     rotations = conversions.rotation_matrix_to_quaternion(rotations,eps=1e-5, order=conversions.QuaternionCoeffOrder.WXYZ)
+#     return rotations
+
+
+def colormap(img, cmap='jet'):
+    import matplotlib.pyplot as plt
+    W, H = img.shape[:2]
+    dpi = 300
+    fig, ax = plt.subplots(1, figsize=(H/dpi, W/dpi), dpi=dpi)
+    im = ax.imshow(img, cmap=cmap)
+    ax.set_axis_off()
+    fig.colorbar(im, ax=ax)
+    fig.tight_layout()
+    fig.canvas.draw()
+    data = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    img = torch.from_numpy(data / 255.).float().permute(2,0,1)
+    plt.close()
+    return img
