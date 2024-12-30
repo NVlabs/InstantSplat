@@ -4,21 +4,19 @@
 DATA_ROOT_DIR="<Absolute_Path>/InstantSplat/assets"
 OUTPUT_DIR="output_infer"
 DATASETS=(
-    examples
+    sora
 )
 
 SCENES=(
-    Barn
-    NUS
+    Santorini
+    Art 
 )
 
 N_VIEWS=(
     3
 )
 
-gs_train_iter=(
-    1500
-)
+gs_train_iter=1000
 
 # Function to get the id of an available GPU
 get_available_gpu() {
@@ -36,6 +34,7 @@ run_on_gpu() {
     local N_VIEW=$4
     local gs_train_iter=$5
     SOURCE_PATH=${DATA_ROOT_DIR}/${DATASET}/${SCENE}/
+    GT_POSE_PATH=${DATA_ROOT_DIR}/${DATASET}/${SCENE}/
     IMAGE_PATH=${SOURCE_PATH}images
     MODEL_PATH=./${OUTPUT_DIR}/${DATASET}/${SCENE}/${N_VIEW}_views
 
@@ -58,7 +57,7 @@ run_on_gpu() {
     --infer_video \
     > ${MODEL_PATH}/01_init_geo.log 2>&1
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Co-visible Global Geometry Initialization completed. Log saved in ${MODEL_PATH}/01_init_geo.log"
-
+ 
     # (2) Train: jointly optimize pose
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting training..."
     CUDA_VISIBLE_DEVICES=${GPU_ID} python ./train.py \
@@ -67,14 +66,12 @@ run_on_gpu() {
     -r 1 \
     --n_views ${N_VIEW} \
     --iterations ${gs_train_iter} \
-    --optim_pose \
-    --depth_ratio 0 \
-    --lambda_dist 100 \
     --pp_optimizer \
+    --optim_pose \
     > ${MODEL_PATH}/02_train.log 2>&1
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Training completed. Log saved in ${MODEL_PATH}/02_train.log"
 
-    # (3) Render-Training_View
+    # (3) Render-Video
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting rendering training views..."
     CUDA_VISIBLE_DEVICES=${GPU_ID} python ./render.py \
     -s ${SOURCE_PATH} \
@@ -82,14 +79,9 @@ run_on_gpu() {
     -r 1 \
     --n_views ${N_VIEW} \
     --iterations ${gs_train_iter} \
-    --depth_ratio 0 \
-    --num_cluster 50 \
-    --mesh_res 2048 \
-    --depth_trunc 6.0 \
-    > ${MODEL_PATH}/03_render_train.log 2>&1
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Rendering completed. Log saved in ${MODEL_PATH}/03_render_train.log"
-    # --voxel_size 0.004 \
-    # --sdf_trunc 0.016 \
+    --infer_video \
+    > ${MODEL_PATH}/03_render.log 2>&1
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Rendering completed. Log saved in ${MODEL_PATH}/03_render.log"
 
 
     echo "======================================================="

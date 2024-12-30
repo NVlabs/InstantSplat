@@ -33,6 +33,7 @@ def ssim_loss_mask(img1, img2, mask, window_size=11, size_average=True):
     # Apply the mask to both images
     img1_masked = img1 * mask
     img2_masked = img2 * mask
+
     return _ssim(img1_masked, img2_masked, window, window_size, channel, size_average)
 
 def l1_loss(network_output, gt):
@@ -44,16 +45,6 @@ def l2_loss(network_output, gt):
 def gaussian(window_size, sigma):
     gauss = torch.Tensor([exp(-(x - window_size // 2) ** 2 / float(2 * sigma ** 2)) for x in range(window_size)])
     return gauss / gauss.sum()
-
-
-def smooth_loss(disp, img):
-    grad_disp_x = torch.abs(disp[:,1:-1, :-2] + disp[:,1:-1,2:] - 2 * disp[:,1:-1,1:-1])
-    grad_disp_y = torch.abs(disp[:,:-2, 1:-1] + disp[:,2:,1:-1] - 2 * disp[:,1:-1,1:-1])
-    grad_img_x = torch.mean(torch.abs(img[:, 1:-1, :-2] - img[:, 1:-1, 2:]), 0, keepdim=True) * 0.5
-    grad_img_y = torch.mean(torch.abs(img[:, :-2, 1:-1] - img[:, 2:, 1:-1]), 0, keepdim=True) * 0.5
-    grad_disp_x *= torch.exp(-grad_img_x)
-    grad_disp_y *= torch.exp(-grad_img_y)
-    return grad_disp_x.mean() + grad_disp_y.mean()
 
 def create_window(window_size, channel):
     _1D_window = gaussian(window_size, 1.5).unsqueeze(1)
