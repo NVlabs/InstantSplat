@@ -17,6 +17,7 @@ InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 
 - [Table of Contents](#table-of-contents)
 - [Free-view Rendering](#free-view-rendering)
+- [Mesh Reconstruction](#mesh-reconstruction)
 - [TODO List](#todo-list)
 - [Get Started](#get-started)
   - [Installation](#installation)
@@ -28,8 +29,12 @@ InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 ## Free-view Rendering
 https://github.com/zhiwenfan/zhiwenfan.github.io/assets/34684115/748ae0de-8186-477a-bab3-3bed80362ad7
 
+
+## Mesh Reconstruction
+![visualization](assets/mesh_recon.png)
+
 ## TODO List
-- [ ] Support 2D-GS
+- [x] Support 2D-GS
 - [ ] Support Mip-Splatting
 
 ## Get Started
@@ -68,7 +73,7 @@ docker pull dockerzhiwen/instantsplat_public:2.0
 if docker failed to produce reasonable results, try Installation step again within the docker.
 
 ### Usage
-1. Data preparation (Our pre-processed data: [link](https://drive.google.com/file/d/1Z17tIgufz7-eZ-W0md_jUlxq89CD1e5s/view))
+1. Data preparation (download our pre-processed data from: [Hugging Face](https://huggingface.co/datasets/kairunwen/InstantSplat) or [Google Drive](https://drive.google.com/file/d/1K_xtwPKc7y8YAG78L0PH5ldR4PlfG-GR/view?usp=sharing))
 ```bash
   cd <data_path>
   # then do whatever data preparation

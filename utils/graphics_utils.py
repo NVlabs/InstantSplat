@@ -48,26 +48,6 @@ def getWorld2View2(R, t, translate=np.array([.0, .0, .0]), scale=1.0):
     Rt = np.linalg.inv(C2W)
     return np.float32(Rt)
 
-def getWorld2View2_torch(R, t, translate=torch.tensor([0.0, 0.0, 0.0]), scale=1.0):
-    translate = torch.tensor(translate, dtype=torch.float32)
-    
-    # Initialize the transformation matrix
-    Rt = torch.zeros((4, 4), dtype=torch.float32)
-    Rt[:3, :3] = R.t()  # Transpose of R
-    Rt[:3, 3] = t
-    Rt[3, 3] = 1.0
-
-    # Compute the inverse to get the camera-to-world transformation
-    C2W = torch.linalg.inv(Rt)
-    cam_center = C2W[:3, 3]
-    cam_center = (cam_center + translate) * scale
-    C2W[:3, 3] = cam_center
-    
-    # Invert again to get the world-to-view transformation
-    Rt = torch.linalg.inv(C2W)
-    
-    return Rt
-
 def getProjectionMatrix(znear, zfar, fovX, fovY):
     tanHalfFovY = math.tan((fovY / 2))
     tanHalfFovX = math.tan((fovX / 2))

@@ -51,10 +51,11 @@ class ModelParams(ParamGroup):
         self._model_path = ""
         self._images = "images"
         self._resolution = -1
-        self._white_background = False        
+        self._white_background = False
         self.data_device = "cuda"
         self.eval = False
         self.n_views = 0
+        self.render_items = ['RGB', 'Alpha', 'Normal', 'Depth', 'Edge', 'Curvature']
         super().__init__(parser, "Loading Parameters", sentinel)
 
     def extract(self, args):
@@ -66,13 +67,14 @@ class PipelineParams(ParamGroup):
     def __init__(self, parser):
         self.convert_SHs_python = False
         self.compute_cov3D_python = False
+        self.depth_ratio = 0.0
         self.debug = False
         super().__init__(parser, "Pipeline Parameters")
 
 class OptimizationParams(ParamGroup):
     def __init__(self, parser):
         self.iterations = 30_000
-        self.position_lr_init =  0.00016
+        self.position_lr_init = 0.00016
         self.position_lr_final = 0.0000016
         self.position_lr_delay_mult = 0.01
         self.position_lr_max_steps = 30_000
@@ -82,12 +84,16 @@ class OptimizationParams(ParamGroup):
         self.rotation_lr = 0.001
         self.percent_dense = 0.01
         self.lambda_dssim = 0.2
+        self.lambda_dist = 0.0
+        self.lambda_normal = 0.05
+        self.opacity_cull = 0.05
+
         self.densification_interval = 100
         self.opacity_reset_interval = 3000
         self.densify_from_iter = 500
         self.densify_until_iter = 15_000
         self.densify_grad_threshold = 0.0002
-        self.random_background = False
+        
         self.pp_optimizer = False
         self.optim_pose = False
         super().__init__(parser, "Optimization Parameters")
