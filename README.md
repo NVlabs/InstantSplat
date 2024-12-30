@@ -37,7 +37,7 @@ InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 ### Installation
 1. Clone InstantSplat and download pre-trained model.
 ```bash
-git clone --recursive https://github.com/NVlabs/InstantSplat.git
+git clone --recursive -b instantsplat-2dgs https://github.com/NVlabs/InstantSplat.git
 cd InstantSplat
 mkdir -p mast3r/checkpoints/
 wget https://download.europe.naverlabs.com/ComputerVision/MASt3R/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth -P mast3r/checkpoints/
@@ -60,6 +60,12 @@ pip install submodules/fused-ssim
 cd croco/models/curope/
 python setup.py build_ext --inplace
 ```
+
+Alternative: use the pre-built docker image: pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel
+```
+docker pull dockerzhiwen/instantsplat_public:2.0
+```
+After setting up a new container, make sure to install the right library (e.g., diff-surfel-rasterization) for 2D-GS.
 
 
 ### Usage
