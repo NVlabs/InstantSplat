@@ -1,5 +1,5 @@
 
-<h2 align="center"> <a href="https://arxiv.org/abs/2403.20309">InstantSplat: Sparse-view SfM-free <a href="https://arxiv.org/abs/2403.20309"> Gaussian Splatting in Seconds </a>
+<h2 align="center"> <a href="https://arxiv.org/abs/2403.20309">InstantSplat: Sparse-view <a href="https://arxiv.org/abs/2403.20309"> Gaussian Splatting in Seconds </a>
 
 <h5 align="center">
 
