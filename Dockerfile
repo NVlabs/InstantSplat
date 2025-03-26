@@ -16,7 +16,7 @@ WORKDIR /
 RUN git clone --recursive https://github.com/NVlabs/InstantSplat.git &&\
     cd InstantSplat &&\
     git submodule update --init --recursive &&\
-    cd submodules/dust3r/ &&\
+    cd dust3r/ &&\
     mkdir -p checkpoints/ &&\
     wget https://download.europe.naverlabs.com/ComputerVision/DUSt3R/DUSt3R_ViTLarge_BaseDecoder_512_dpt.pth -P checkpoints/
 
