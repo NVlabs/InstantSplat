@@ -76,7 +76,6 @@ run_on_gpu() {
     --conf_aware_ranking \
     > ${MODEL_PATH}/01_init_geo.log 2>&1
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Co-visible Global Geometry Initialization completed. Log saved in ${MODEL_PATH}/01_init_geo.log"
-
  
     # (2) Train: jointly optimize pose
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting training..."
@@ -91,6 +90,15 @@ run_on_gpu() {
     > ${MODEL_PATH}/02_train.log 2>&1
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Training completed. Log saved in ${MODEL_PATH}/02_train.log"
     
+    # (3) Init Test Pose
+    # echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting Init Test Pose..."
+    # CUDA_VISIBLE_DEVICES=${GPU_ID} python -W ignore ./init_test_pose.py \
+    # -s ${SOURCE_PATH} \
+    # -m ${MODEL_PATH} \
+    # --n_views ${N_VIEW} \
+    # --focal_avg \
+    # > ${MODEL_PATH}/03_init_test_pose.log 2>&1
+    # echo "[$(date '+%Y-%m-%d %H:%M:%S')] Init Test Pose completed. Log saved in ${MODEL_PATH}/03_init_test_pose.log"
     
     # (3) Render-Training_View
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting rendering training views..."
