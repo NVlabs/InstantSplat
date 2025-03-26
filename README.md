@@ -8,7 +8,7 @@
 </h5>
 
 <div align="center">
-This repository is the official implementation of InstantSplat, an sparse-view framework for large-scale scene reconstruction method using Gaussian Splatting.
+This repository is the official implementation of InstantSplat, a sparse-view framework for large-scale scene reconstruction method using Gaussian Splatting.
 InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 </div>
 <br>
