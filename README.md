@@ -8,7 +8,7 @@
 </h5>
 
 <div align="center">
-This repository is the official implementation of InstantSplat, an sparse-view, SfM-free framework for large-scale scene reconstruction method using Gaussian Splatting.
+This repository is the official implementation of InstantSplat, a sparse-view framework for large-scale scene reconstruction method using Gaussian Splatting.
 InstantSplat supports 3D-GS, 2D-GS, and Mip-Splatting.
 </div>
 <br>
@@ -69,15 +69,16 @@ docker pull dockerzhiwen/instantsplat_public:2.0
 if docker failed to produce reasonable results, try Installation step again within the docker.
 
 ### Usage
-1. Data preparation (Our pre-processed data: [link](https://drive.google.com/file/d/1Z17tIgufz7-eZ-W0md_jUlxq89CD1e5s/view))
+1. Data preparation (download our pre-processed data from: [Hugging Face](https://huggingface.co/datasets/kairunwen/InstantSplat) or [Google Drive](https://drive.google.com/file/d/1Z17tIgufz7-eZ-W0md_jUlxq89CD1e5s/view))
 ```bash
   cd <data_path>
   # then do whatever data preparation
 ```
 
-2. Command
+1. Command
 ```bash
   # InstantSplat train and output video (no GT reference, render by interpolation) using the following command.
+  # Users can place their data in the 'assets/examples/<scene_name>/images' folder and run the following command directly.
   bash scripts/run_infer.sh
 
   # InstantSplat train and evaluate (with GT reference) using the following command.
@@ -96,8 +97,8 @@ If you find our work useful in your research, please consider giving a star :sta
 
 ```bibTeX
 @misc{fan2024instantsplat,
-        title={InstantSplat: Unbounded Sparse-view Pose-free Gaussian Splatting in 40 Seconds},
-        author={Zhiwen Fan and Wenyan Cong and Kairun Wen and Kevin Wang and Jian Zhang and Xinghao Ding and Danfei Xu and Boris Ivanovic and Marco Pavone and Georgios Pavlakos and Zhangyang Wang and Yue Wang},
+        title={InstantSplat: Sparse-view Gaussian Splatting in Seconds},
+        author={Zhiwen Fan and Kairun Wen and Wenyan Cong and Kevin Wang and Jian Zhang and Xinghao Ding and Danfei Xu and Boris Ivanovic and Marco Pavone and Georgios Pavlakos and Zhangyang Wang and Yue Wang},
         year={2024},
         eprint={2403.20309},
         archivePrefix={arXiv},
