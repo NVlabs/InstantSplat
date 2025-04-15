@@ -55,6 +55,7 @@ class ModelParams(ParamGroup):
         self.data_device = "cuda"
         self.eval = False
         self.n_views = 0
+        self.init_scale_from_view_depth = False
         super().__init__(parser, "Loading Parameters", sentinel)
 
     def extract(self, args):

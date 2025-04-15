@@ -12,11 +12,13 @@
 import os
 import random
 import json
+import numpy as np
 from utils.system_utils import searchForMaxIteration
 from scene.dataset_readers import sceneLoadTypeCallbacks
 from scene.gaussian_model import GaussianModel
 from arguments import ModelParams
 from utils.camera_utils import cameraList_from_camInfos, camera_to_JSON
+from utils.graphics_utils import compute_scale_gaussian_by_project_pair_pcd, fov2focal
 
 class Scene:
 
@@ -82,7 +84,14 @@ class Scene:
                                                            "iteration_" + str(self.loaded_iter),
                                                            "point_cloud.ply"))
         else:
-            self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent)
+            scale_gaussian = None
+            if args.init_scale_from_view_depth:
+                scale_gaussian = compute_scale_gaussian_by_project_pair_pcd(
+                    scene_info.point_cloud.points,
+                    np.linalg.inv(scene_info.train_poses),
+                    [[fov2focal(i.FovX, i.width), fov2focal(i.FovY, i.height)] for i in scene_info.train_cameras],
+                )
+            self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent, scale_gaussian)
             self.gaussians.init_RT_seq(self.train_cameras)
             # self.gaussians.init_exposure_seq(self.train_cameras)
 

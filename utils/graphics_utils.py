@@ -95,3 +95,41 @@ def fov2focal(fov, pixels):
 
 def focal2fov(focal, pixels):
     return 2*math.atan(pixels/(2*focal))
+
+def cumulative_sum(input_list):
+    cumulative_list = [0]
+    current_sum = 0
+    for num in input_list:
+        current_sum += num
+        cumulative_list.append(current_sum)
+    return cumulative_list
+
+def compute_scale_gaussian_by_project_pair_pcd(points_3d_all, extrins, intrins, view_num_list=None):
+    frame_num = extrins.shape[0]
+    per_view_num = points_3d_all.shape[0]//frame_num
+    if view_num_list is None:
+        select_range = cumulative_sum(np.tile(per_view_num, (frame_num)))
+    else:
+        select_range = cumulative_sum(view_num_list)
+
+    depth_z = []
+    for ii in range(frame_num):
+        print(f"view {ii}, points {select_range[ii]} {select_range[ii+1]}")
+        points_3d = points_3d_all
+        extrin = extrins[ii]
+        intrin = intrins[ii]
+
+        R = extrin[:3,:3]
+        t = extrin[:3, 3]
+        points_cam = R @ points_3d.T + t[:, np.newaxis]  # Broadcasting t for each point
+
+        fx, fy = intrin
+
+        depths = points_cam[2, :]
+        depth_z.append(depths)
+    depth_z = np.array(depth_z)
+    depth_z = np.min(depth_z, 0)
+    depth_z = np.clip(depth_z, 0.01, depth_z.max())
+    scale_gaussian = depth_z / ((fx + fy)/2)
+    print("compute_scale_gaussian_by_project_pair_pcd", points_3d_all.shape, scale_gaussian.shape)
+    return scale_gaussian
