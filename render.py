@@ -96,9 +96,13 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
                 gt, os.path.join(gts_path, "{0:05d}".format(idx) + ".png")
             )
 
-def render_set_optimize(model_path, name, iteration, views, gaussians, pipeline, background):
-    render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
-    gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
+def render_set_optimize(model_path, name, iteration, views, gaussians, pipeline, background, output_path=None):
+    if output_path is not None:
+        render_path = output_path
+        gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
+    else:
+        render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
+        gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
 
     makedirs(render_path, exist_ok=True)
     makedirs(gts_path, exist_ok=True)
@@ -193,6 +197,7 @@ def render_sets(
     skip_train: bool,
     skip_test: bool,
     args,
+    output_path=None,
 ):
     with torch.no_grad():
         gaussians = GaussianModel(dataset.sh_degree)
@@ -226,6 +231,7 @@ def render_sets(
                 gaussians,
                 pipeline,
                 background,
+                output_path=output_path,
             )
         end_time = time()
         save_time(dataset.model_path, '[4] render', end_time - start_time)
@@ -260,10 +266,11 @@ if __name__ == "__main__":
     parser.add_argument("--optim_test_pose_iter", default=500, type=int)
     parser.add_argument("--infer_video", action="store_true")
     parser.add_argument("--test_fps", action="store_true")
+    parser.add_argument("--output_path", default=None, type=str, help="Custom output path for rendered images")
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
 
     # Initialize system state (RNG)
     # safe_state(args.quiet)
 
-    render_sets(model.extract(args), args.iterations, pipeline.extract(args), args.skip_train, args.skip_test, args)
+    render_sets(model.extract(args), args.iterations, pipeline.extract(args), args.skip_train, args.skip_test, args, output_path=args.output_path)
