@@ -94,6 +94,7 @@ class PerPointAdam(Optimizer):
                     scaled_step_size = step_size * per_point_lr
                     p.data.add_(-scaled_step_size * (exp_avg / denom))
                     per_point_lr = self._adjust_per_point_lr(per_point_lr, grad, mask)
+                    group['per_point_lr'] = per_point_lr
                 else:
                     p.data.addcdiv_(exp_avg, denom, value=-step_size)
 
