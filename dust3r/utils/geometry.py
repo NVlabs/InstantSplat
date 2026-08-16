@@ -20,18 +20,20 @@ def xy_grid(W, H, device=None, origin=(0, 0), unsqueeze=None, cat_dim=-1, homoge
     if device is None:
         # numpy
         arange, meshgrid, stack, ones = np.arange, np.meshgrid, np.stack, np.ones
+        unsqueeze_fn = lambda x, dim: np.expand_dims(x, dim)
     else:
         # torch
         arange = lambda *a, **kw: torch.arange(*a, device=device, **kw)
         meshgrid, stack = torch.meshgrid, torch.stack
         ones = lambda *a: torch.ones(*a, device=device)
+        unsqueeze_fn = lambda x, dim: x.unsqueeze(dim)
 
     tw, th = [arange(o, o + s, **arange_kw) for s, o in zip((W, H), origin)]
     grid = meshgrid(tw, th, indexing='xy')
     if homogeneous:
         grid = grid + (ones((H, W)),)
     if unsqueeze is not None:
-        grid = (grid[0].unsqueeze(unsqueeze), grid[1].unsqueeze(unsqueeze))
+        grid = tuple(unsqueeze_fn(g, unsqueeze) for g in grid)
     if cat_dim is not None:
         grid = stack(grid, cat_dim)
     return grid
