@@ -71,7 +71,7 @@ if __name__ == '__main__':
     from dust3r.viz import SceneViz, auto_cam_size
     from dust3r.utils.image import rgb
 
-    dataset = Waymo(split='train', ROOT="data/megadepth_processed", resolution=224, aug_crop=16)
+    dataset = Waymo(split='train', ROOT="data/waymo_processed", resolution=224, aug_crop=16)
 
     for idx in np.random.permutation(len(dataset)):
         views = dataset[idx]
