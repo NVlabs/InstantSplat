@@ -26,7 +26,7 @@ class TSDFPostProcess:
 
     def _get_depthmaps(self, TSDF_filtering_thresh=None):
         if TSDF_filtering_thresh:
-            self._refine_depths_with_TSDF(self.optimizer, TSDF_filtering_thresh)  # compute refined depths if needed
+            self._refine_depths_with_TSDF(TSDF_filtering_thresh)  # compute refined depths if needed
         dms = self.TSDF_im_depthmaps if TSDF_filtering_thresh else self.im_depthmaps
         return [d.exp() for d in dms]
 
