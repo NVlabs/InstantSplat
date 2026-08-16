@@ -57,7 +57,8 @@ def set_print_with_timestamp(time_format="%Y-%m-%d %H:%M:%S"):
         now = datetime.datetime.now()
         formatted_date_time = now.strftime(time_format)
 
-        builtin_print(f'[{formatted_date_time}] ', end='')  # print with time stamp
+        common_kwargs = {k: v for k, v in kwargs.items() if k in ('file', 'flush')}
+        builtin_print(f'[{formatted_date_time}] ', end='', **common_kwargs)  # print with time stamp
         builtin_print(*args, **kwargs)
 
     builtins.print = print_with_timestamp
