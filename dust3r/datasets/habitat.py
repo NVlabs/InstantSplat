@@ -33,7 +33,7 @@ class Habitat(BaseStereoViewDataset):
             label += '/' + subscene
             self.instances = [int(instance) - 1]
         valid = np.bool_([scene.startswith(label) for scene in self.scenes])
-        assert sum(valid), 'no scene was selected for {label=} {instance=}'
+        assert sum(valid), f'no scene was selected for {label=} {instance=}'
         self.scenes = [scene for i, scene in enumerate(self.scenes) if valid[i]]
 
     def _get_views(self, idx, resolution, rng):
