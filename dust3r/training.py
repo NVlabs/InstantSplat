@@ -129,7 +129,7 @@ def train(args):
     print(f'>> Creating train criterion = {args.train_criterion}')
     train_criterion = eval(args.train_criterion).to(device)
     print(f'>> Creating test criterion = {args.test_criterion or args.train_criterion}')
-    test_criterion = eval(args.test_criterion or args.criterion).to(device)
+    test_criterion = eval(args.test_criterion or args.train_criterion).to(device)
 
     model.to(device)
     model_without_ddp = model
