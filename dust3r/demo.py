@@ -66,7 +66,7 @@ def set_print_with_timestamp(time_format="%Y-%m-%d %H:%M:%S"):
 def _convert_scene_output_to_glb(outdir, imgs, pts3d, mask, focals, cams2world, cam_size=0.05,
                                  cam_color=None, as_pointcloud=False,
                                  transparent_cams=False, silent=False):
-    assert len(pts3d) == len(mask) <= len(imgs) <= len(cams2world) == len(focals)
+    assert len(pts3d) == len(mask) == len(imgs) == len(cams2world) == len(focals)
     pts3d = to_numpy(pts3d)
     imgs = to_numpy(imgs)
     focals = to_numpy(focals)
