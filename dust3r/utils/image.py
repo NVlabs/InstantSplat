@@ -51,8 +51,11 @@ def rgb(ftensor, true_shape=None):
     elif ftensor.ndim == 4 and ftensor.shape[1] == 3:
         ftensor = ftensor.transpose(0, 2, 3, 1)
     if true_shape is not None:
-        H, W = true_shape
-        ftensor = ftensor[:H, :W]
+        H, W = true_shape[-2:]
+        if ftensor.ndim == 4:
+            ftensor = ftensor[:, :H, :W]
+        else:
+            ftensor = ftensor[:H, :W]
     if ftensor.dtype == np.uint8:
         img = np.float32(ftensor) / 255
     else:
