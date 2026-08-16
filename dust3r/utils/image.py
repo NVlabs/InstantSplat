@@ -111,7 +111,7 @@ def load_images(folder_or_list, size, square_ok=False, verbose=True):
         else:
             halfw, halfh = ((2*cx)//16)*8, ((2*cy)//16)*8
             if not (square_ok) and W == H:
-                halfh = 3*halfw/4
+                halfh = (3*halfw)//4
             img = img.crop((cx-halfw, cy-halfh, cx+halfw, cy+halfh))
 
         W2, H2 = img.size
