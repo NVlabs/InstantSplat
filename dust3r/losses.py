@@ -242,10 +242,10 @@ class Regr3D_ShiftInv (Regr3D):
     """ Same than Regr3D but invariant to depth shift.
     """
 
-    def get_all_pts3d(self, gt1, gt2, pred1, pred2):
+    def get_all_pts3d(self, gt1, gt2, pred1, pred2, **kw):
         # compute unnormalized points
         gt_pts1, gt_pts2, pred_pts1, pred_pts2, mask1, mask2, monitoring = \
-            super().get_all_pts3d(gt1, gt2, pred1, pred2)
+            super().get_all_pts3d(gt1, gt2, pred1, pred2, **kw)
 
         # compute median depth
         gt_z1, gt_z2 = gt_pts1[..., 2], gt_pts2[..., 2]
