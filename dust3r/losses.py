@@ -221,9 +221,9 @@ class ConfLoss (MultiLoss):
         # compute per-pixel loss
         ((loss1, msk1), (loss2, msk2)), details = self.pixel_loss(gt1, gt2, pred1, pred2, **kw)
         if loss1.numel() == 0:
-            print('NO VALID POINTS in img1', force=True)
+            print('NO VALID POINTS in img1', flush=True)
         if loss2.numel() == 0:
-            print('NO VALID POINTS in img2', force=True)
+            print('NO VALID POINTS in img2', flush=True)
 
         # weight by confidence
         conf1, log_conf1 = self.get_conf_log(pred1['conf'][msk1])
