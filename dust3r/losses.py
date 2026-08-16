@@ -268,9 +268,9 @@ class Regr3D_ScaleInv (Regr3D):
         if gt_scale == True: enforce the prediction to take the same scale than GT
     """
 
-    def get_all_pts3d(self, gt1, gt2, pred1, pred2):
+    def get_all_pts3d(self, gt1, gt2, pred1, pred2, **kw):
         # compute depth-normalized points
-        gt_pts1, gt_pts2, pred_pts1, pred_pts2, mask1, mask2, monitoring = super().get_all_pts3d(gt1, gt2, pred1, pred2)
+        gt_pts1, gt_pts2, pred_pts1, pred_pts2, mask1, mask2, monitoring = super().get_all_pts3d(gt1, gt2, pred1, pred2, **kw)
 
         # measure scene scale
         _, gt_scale = get_joint_pointcloud_center_scale(gt_pts1, gt_pts2, mask1, mask2)
