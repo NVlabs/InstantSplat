@@ -171,6 +171,7 @@ class SceneViz:
         return self
 
     def add_rgbd(self, image, depth, intrinsics=None, cam2world=None, zfar=np.inf, mask=None):
+        image = img_to_arr(image)
         # make up some intrinsics
         if intrinsics is None:
             H, W, THREE = image.shape
