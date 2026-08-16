@@ -26,12 +26,14 @@ class BlendedMVS (BaseStereoViewDataset):
         pairs = np.load(osp.join(self.ROOT, 'blendedmvs_pairs.npy'))
         if split is None:
             selection = slice(None)
-        if split == 'train':
+        elif split == 'train':
             # select 90% of all scenes
             selection = (pairs['seq_low'] % 10) > 0
-        if split == 'val':
+        elif split == 'val':
             # select 10% of all scenes
             selection = (pairs['seq_low'] % 10) == 0
+        else:
+            raise ValueError(f'bad {split=}')
         self.pairs = pairs[selection]
 
         # list of all scenes
