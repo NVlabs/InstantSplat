@@ -123,7 +123,7 @@ class TSDFPostProcess:
                                            H) & torch.logical_and(0 <= imc[:, 0], imc[:, 0] < W)
             imc[~valids[ni]] = 0
             depths[ni] = depth[imc[:, 1], imc[:, 0]]
-            confs[ni] = conf.cuda()[imc[:, 1], imc[:, 0]]
+            confs[ni] = conf.to(imc.device)[imc[:, 1], imc[:, 0]]
         return depths, confs, valids
 
     def _get_confs_with_normals(self):
