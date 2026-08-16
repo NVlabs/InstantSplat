@@ -13,6 +13,7 @@ import os
 import sys
 import torch
 from PIL import Image
+import cv2
 from typing import NamedTuple
 from scene.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec2rotmat, \
     read_extrinsics_binary, read_intrinsics_binary, read_points3D_binary, read_points3D_text
