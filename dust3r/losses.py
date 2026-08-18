@@ -107,8 +107,9 @@ class MultiLoss (nn.Module):
     def __add__(self, loss2):
         assert isinstance(loss2, MultiLoss)
         res = cur = copy(self)
-        # find the end of the chain
+        # shallow-copy each wrapper node and re-link the chain
         while cur._loss2 is not None:
+            cur._loss2 = copy(cur._loss2)
             cur = cur._loss2
         cur._loss2 = loss2
         return res
