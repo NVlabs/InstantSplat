@@ -19,10 +19,10 @@ def todevice(batch, device, callback=None, non_blocking=False):
         batch = callback(batch)
 
     if isinstance(batch, dict):
-        return {k: todevice(v, device) for k, v in batch.items()}
+        return {k: todevice(v, device, non_blocking=non_blocking) for k, v in batch.items()}
 
     if isinstance(batch, (tuple, list)):
-        return type(batch)(todevice(x, device) for x in batch)
+        return type(batch)(todevice(x, device, non_blocking=non_blocking) for x in batch)
 
     x = batch
     if device == 'numpy':
